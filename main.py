@@ -13,12 +13,27 @@ TOKEN = os.environ.get('TELEGRAM_TOKEN')
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
 
+# Разрешённые ID: супергруппа и личка
+ALLOWED_CHAT_IDS = [-1002523843565, 491842357]
+
+def is_allowed(message):
+    if message.chat.id not in ALLOWED_CHAT_IDS:
+        bot.send_message(
+            message.chat.id,
+            "❌ Извините, бот доступен только в отдельных чатах.",
+            reply_to_message_id=message.message_id
+        )
+        return False
+    return True
+
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
+    if not is_allowed(message): return
     bot.reply_to(message, "Привет! Напиши /рандом 1 100, чтобы получить случайное число.")
 
 @bot.message_handler(commands=['рандом'])
 def handle_random(message):
+    if not is_allowed(message): return
     try:
         parts = message.text.split()
         if len(parts) != 3:
@@ -30,56 +45,73 @@ def handle_random(message):
     except:
         bot.reply_to(message, "Ошибка! Используй формат: /рандом 1 100")
 
-# Короткий алиас для /рандом
 @bot.message_handler(commands=['р'])
 def handle_short_random(message):
+    if not is_allowed(message): return
     handle_random(message)
 
-# Быстрые команды с фиксированным диапазоном
 @bot.message_handler(commands=['из104'])
 def handle_104(message):
+    if not is_allowed(message): return
     result = random.randint(1, 104)
     bot.reply_to(message, f"🎯 Твоё число от 1 до 104: {result}")
 
 @bot.message_handler(commands=['из4'])
 def handle_4(message):
+    if not is_allowed(message): return
     result = random.randint(1, 4)
     bot.reply_to(message, f"🎯 Твоё число от 1 до 4: {result}")
 
 @bot.message_handler(commands=['из3'])
 def handle_3(message):
+    if not is_allowed(message): return
     result = random.randint(1, 3)
     bot.reply_to(message, f"🎯 Твоё число от 1 до 3: {result}")
 
 @bot.message_handler(commands=['из2'])
 def handle_2(message):
+    if not is_allowed(message): return
     result = random.randint(1, 2)
     bot.reply_to(message, f"🎯 Твоё число от 1 до 2: {result}")
 
 @bot.message_handler(commands=['к'])
 def handle_commands_list(message):
+    if not is_allowed(message): return
     text = (
-        "📋 *Команды бота:*\n\n"
-        
-        "🎲 *Рандомные числа:*\n"
-        "/рандом A B — случайное число от A до B\n"
-        "/р A B — то же самое, но короче\n"
-        "/из104 — случайное число от 1 до 104\n"
-        "/из4 — от 1 до 4\n"
-        "/из3 — от 1 до 3\n"
-        "/из2 — от 1 до 2\n\n"
-        
-        "⏱ *Таймеры:*\n"
-        "/таймер N — таймер на N секунд (например: /таймер 120)\n"
-        "/обновление N — установить интервал обновления таймера (в секундах, до 1 часа)\n\n"
+        "📋 *Команды бота:*
 
-        "🧾 *Прочее:*\n"
+"
+        "🎲 *Рандомные числа:*
+"
+        "/рандом A B — случайное число от A до B
+"
+        "/р A B — то же самое, но короче
+"
+        "/из104 — случайное число от 1 до 104
+"
+        "/из4 — от 1 до 4
+"
+        "/из3 — от 1 до 3
+"
+        "/из2 — от 1 до 2
+
+"
+        "⏱ *Таймеры:*
+"
+        "/таймер N — таймер на N секунд (например: /таймер 120)
+"
+        "/обновление N — установить интервал обновления таймера (в секундах, до 1 часа)
+
+"
+        "🧾 *Прочее:*
+"
         "/к — показать этот список команд"
     )
     bot.reply_to(message, text, parse_mode='Markdown')
 
 @bot.message_handler(commands=['обновление'])
 def set_update_interval(message):
+    if not is_allowed(message): return
     global update_interval
     try:
         parts = message.text.split()
@@ -94,6 +126,7 @@ def set_update_interval(message):
 
 @bot.message_handler(commands=['таймер'])
 def start_timer(message):
+    if not is_allowed(message): return
     try:
         parts = message.text.split()
         if len(parts) != 2 or not parts[1].isdigit():
@@ -107,7 +140,6 @@ def start_timer(message):
         chat_id = message.chat.id
         thread_id = message.message_thread_id
 
-        # первый вывод — сразу
         bot.send_message(
             chat_id,
             f'⏳ Осталось: {seconds // 60}:{seconds % 60:02}',
