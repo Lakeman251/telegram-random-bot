@@ -85,17 +85,25 @@ def set_update_interval(message):
         parts = message.text.split()
         seconds = int(parts[1])
         if seconds < 5 or seconds > 3600:
-            bot.reply_to(message, "⚠ Интервал должен быть от 5 до 3600 секунд.")
+            bot.reply_to(message, "⚠️ Интервал должен быть от 5 до 3600 секунд.")
             return
         update_interval = seconds
         bot.reply_to(message, f"✅ Интервал обновления установлен: каждые {seconds} сек.")
     except:
-        bot.reply_to(message, "⚠ Формат: /обновление 15 — число в секундах.")
+        bot.reply_to(message, "⚠️ Формат: /обновление 15 — число в секундах.")
 
 @bot.message_handler(commands=['таймер'])
 def start_timer(message):
     try:
-        seconds = int(message.text.split()[1])
+        parts = message.text.split()
+        if len(parts) != 2 or not parts[1].isdigit():
+            raise ValueError
+
+        seconds = int(parts[1])
+        if seconds < 1:
+            bot.reply_to(message, "⚠️ Введи число больше 0.")
+            return
+
         chat_id = message.chat.id
         thread_id = message.message_thread_id
 
@@ -126,7 +134,7 @@ def start_timer(message):
         ).start()
 
     except:
-        bot.reply_to(message, '⚠ Используй формат: /таймер 60')
+        bot.reply_to(message, '⚠️ Используй формат: /таймер 60')
 
 @app.route(f'/{TOKEN}', methods=['POST'])
 def webhook():
