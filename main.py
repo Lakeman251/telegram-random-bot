@@ -51,7 +51,7 @@ def handle_2(message):
     result = random.randint(1, 2)
     bot.reply_to(message, f"🎯 Твоё число от 1 до 2: {result}")
 
-@bot.message_handler(commands=['k'])
+@bot.message_handler(commands=['к'])
 def handle_commands_list(message):
     text = (
         "📋 *Команды бота:*\n"
@@ -61,7 +61,7 @@ def handle_commands_list(message):
         "/из4 — от 1 до 4\n"
         "/из3 — от 1 до 3\n"
         "/из2 — от 1 до 2\n"
-        "/k — показать этот список команд"
+        "/к — показать этот список команд"
     )
     bot.reply_to(message, text, parse_mode='Markdown')
 
