@@ -118,7 +118,12 @@ def start_timer(message):
                         f'⏳ Осталось: {total_seconds // 60}:{total_seconds % 60:02}',
                         message_thread_id=thread_id
                     )
-            bot.send_message(chat_id, '🔔 Таймер окончен!', message_thread_id=thread_id)
+            bot.send_message(
+                chat_id,
+                f'🔔 <a href="tg://user?id={user_id}">{name}</a>, таймер окончен!',
+                parse_mode='HTML',
+                message_thread_id=thread_id
+            )
 
         threading.Thread(
             target=run_timer,
