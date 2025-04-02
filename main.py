@@ -74,13 +74,15 @@ def webhook():
 def index():
     return 'Бот работает!'
 
-@app.before_request
-def activate_webhook():
-    info = bot.get_webhook_info()
+@app.route('/setwebhook')
+def set_webhook():
     url = f'{os.environ.get("RENDER_EXTERNAL_URL")}/{TOKEN}'
-    if info.url != url:
-        bot.remove_webhook()
-        bot.set_webhook(url=url)
+    bot.remove_webhook()
+    success = bot.set_webhook(url=url)
+    if success:
+        return '✅ Webhook установлен!'
+    else:
+        return '❌ Ошибка при установке webhook.'
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=int(os.environ.get('PORT', 5000)))
