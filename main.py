@@ -105,18 +105,19 @@ def start_timer(message):
             message_thread_id=thread_id
         )
 
-        def run_timer(total_seconds, chat_id, thread_id):
-            global update_interval
-            while total_seconds > 0:
-                time.sleep(update_interval)
-                total_seconds -= update_interval
-                if total_seconds > 0:
-                    bot.send_message(
-                        chat_id,
-                        f'⏳ Осталось: {total_seconds//60}:{total_seconds%60:02}',
-                        message_thread_id=thread_id
-                    )
-            bot.send_message(chat_id, '🔔 Таймер окончен!', message_thread_id=thread_id)
+    def run_timer(total_seconds, chat_id, thread_id):
+    global update_interval
+    while total_seconds > 0:
+        if total_seconds > update_interval:
+            bot.send_message(
+                chat_id,
+                f'⏳ Осталось: {total_seconds//60}:{total_seconds%60:02}',
+                message_thread_id=thread_id
+            )
+        time.sleep(update_interval)
+        total_seconds -= update_interval
+
+    bot.send_message(chat_id, '🔔 Таймер окончен!', message_thread_id=thread_id)
 
         threading.Thread(
             target=run_timer,
