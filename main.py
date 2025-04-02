@@ -6,6 +6,9 @@ import random
 import threading
 import time
 
+# глобальная переменная: интервал обновления таймера (по умолчанию 20 секунд)
+update_interval = 20
+
 TOKEN = os.environ.get('TELEGRAM_TOKEN')
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
@@ -56,55 +59,63 @@ def handle_2(message):
 @bot.message_handler(commands=['к'])
 def handle_commands_list(message):
     text = (
-        "📋 *Команды бота:*\n"
+        "📋 *Команды бота:*\n\n"
+        
+        "🎲 *Рандомные числа:*\n"
         "/рандом A B — случайное число от A до B\n"
         "/р A B — то же самое, но короче\n"
         "/из104 — случайное число от 1 до 104\n"
         "/из4 — от 1 до 4\n"
         "/из3 — от 1 до 3\n"
-        "/из2 — от 1 до 2\n"
+        "/из2 — от 1 до 2\n\n"
+        
+        "⏱ *Таймеры:*\n"
         "/таймер N — таймер на N секунд (например: /таймер 120)\n"
+        "/обновление N — установить интервал обновления таймера (в секундах)\n\n"
+
+        "🧾 *Прочее:*\n"
         "/к — показать этот список команд"
     )
     bot.reply_to(message, text, parse_mode='Markdown')
 
+@bot.message_handler(commands=['обновление'])
+def set_update_interval(message):
+    global update_interval
+    try:
+        parts = message.text.split()
+        seconds = int(parts[1])
+        if seconds < 5 or seconds > 300:
+            bot.reply_to(message, "⚠ Интервал должен быть от 5 до 300 секунд.")
+            return
+        update_interval = seconds
+        bot.reply_to(message, f"✅ Интервал обновления установлен: каждые {seconds} сек.")
+    except:
+        bot.reply_to(message, "⚠ Формат: /обновление 15 — число в секундах.")
 
 @bot.message_handler(commands=['таймер'])
 def start_timer(message):
     try:
-        parts = message.text.split()
-        seconds = int(parts[1])
-        
-        sent_message = bot.reply_to(message, f'⏳ Осталось: {seconds//60}:{seconds%60:02}')
+        seconds = int(message.text.split()[1])
+        chat_id = message.chat.id
+        bot.send_message(chat_id, f'⏳ Осталось: {seconds//60}:{seconds%60:02}')
 
-        # Функция обновления таймера
-        def update_timer(seconds_left, message_id, chat_id):
-            while seconds_left > 0:
-                minutes = seconds_left // 60
-                seconds = seconds_left % 60
-                bot.edit_message_text(
-                    chat_id=chat_id,
-                    message_id=message_id,
-                    text=f'⏳ Осталось: {minutes}:{seconds:02}'
-                )
-                time.sleep(10)  # Обновляем раз в 10 секунд
-                seconds_left -= 10
-            
-            # Когда таймер закончится
-            bot.edit_message_text(
-                chat_id=chat_id,
-                message_id=message_id,
-                text='⏳ Осталось: 0:00 🔔 Таймер окончен!'
-            )
+        def run_timer(total_seconds, chat_id):
+            global update_interval
+            while total_seconds > 0:
+                time.sleep(update_interval)
+                total_seconds -= update_interval
+                if total_seconds > 0:
+                    bot.send_message(chat_id, f'⏳ Осталось: {total_seconds//60}:{total_seconds%60:02}')
+            bot.send_message(chat_id, '🔔 Таймер окончен!')
 
-        # Запускаем таймер в отдельном потоке, чтобы не блокировать бота
         threading.Thread(
-            target=update_timer,
-            args=(seconds, sent_message.message_id, sent_message.chat.id)
+            target=run_timer,
+            args=(seconds, chat_id)
         ).start()
 
-    except Exception as e:
-        bot.reply_to(message, 'Ошибка! Используй формат: /таймер 120 (в секундах)')
+    except:
+        bot.reply_to(message, '⚠ Используй формат: /таймер 60')
+
 
 @app.route(f'/{TOKEN}', methods=['POST'])
 def webhook():
