@@ -51,6 +51,20 @@ def handle_2(message):
     result = random.randint(1, 2)
     bot.reply_to(message, f"🎯 Твоё число от 1 до 2: {result}")
 
+@bot.message_handler(commands=['k'])
+def handle_commands_list(message):
+    text = (
+        "📋 *Команды бота:*\n"
+        "/рандом A B — случайное число от A до B\n"
+        "/р A B — то же самое, но короче\n"
+        "/из104 — случайное число от 1 до 104\n"
+        "/из4 — от 1 до 4\n"
+        "/из3 — от 1 до 3\n"
+        "/из2 — от 1 до 2\n"
+        "/k — показать этот список команд"
+    )
+    bot.reply_to(message, text, parse_mode='Markdown')
+
 @app.route(f'/{TOKEN}', methods=['POST'])
 def webhook():
     bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
