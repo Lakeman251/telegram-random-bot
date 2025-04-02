@@ -25,6 +25,32 @@ def handle_random(message):
     except:
         bot.reply_to(message, "Ошибка! Используй формат: /рандом 1 100")
 
+# Короткий алиас для /рандом
+@bot.message_handler(commands=['р'])
+def handle_short_random(message):
+    handle_random(message)
+
+# Быстрые команды с фиксированным диапазоном
+@bot.message_handler(commands=['из104'])
+def handle_104(message):
+    result = random.randint(1, 104)
+    bot.reply_to(message, f"🎯 Твоё число от 1 до 104: {result}")
+
+@bot.message_handler(commands=['из4'])
+def handle_4(message):
+    result = random.randint(1, 4)
+    bot.reply_to(message, f"🎯 Твоё число от 1 до 4: {result}")
+
+@bot.message_handler(commands=['из3'])
+def handle_3(message):
+    result = random.randint(1, 3)
+    bot.reply_to(message, f"🎯 Твоё число от 1 до 3: {result}")
+
+@bot.message_handler(commands=['из2'])
+def handle_2(message):
+    result = random.randint(1, 2)
+    bot.reply_to(message, f"🎯 Твоё число от 1 до 2: {result}")
+
 @app.route(f'/{TOKEN}', methods=['POST'])
 def webhook():
     bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
