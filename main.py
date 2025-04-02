@@ -34,7 +34,10 @@ def webhook():
 def index():
     return 'Бот работает!'
 
-if __name__ == '__main__':
+@app.before_first_request
+def activate_webhook():
     bot.remove_webhook()
     bot.set_webhook(url=f'{os.environ.get("RENDER_EXTERNAL_URL")}{TOKEN}')
+
+if __name__ == '__main__':
     app.run(host="0.0.0.0", port=int(os.environ.get('PORT', 5000)))
