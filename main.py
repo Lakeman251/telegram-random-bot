@@ -6,15 +6,13 @@ import random
 import threading
 import time
 
-# глобальная переменная: интервал обновления таймера (по умолчанию 20 секунд)
 update_interval = 20
-
 TOKEN = os.environ.get('TELEGRAM_TOKEN')
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
 
-# Разрешённые ID: супергруппа и личка
 ALLOWED_CHAT_IDS = [-1002523843565, 491842357]
+active_timers = {}
 
 def is_allowed(message):
     if message.chat.id not in ALLOWED_CHAT_IDS:
@@ -78,19 +76,36 @@ def handle_2(message):
 def handle_commands_list(message):
     if not is_allowed(message): return
     text = (
-    "📋 *Команды бота:*\n\n"
-    "🎲 *Рандомные числа:*\n"
-    "/рандом A B — случайное число от A до B\n"
-    "/р A B — то же самое, но короче\n"
-    "/из104 — случайное число от 1 до 104\n"
-    "/из4 — от 1 до 4\n"
-    "/из3 — от 1 до 3\n"
-    "/из2 — от 1 до 2\n\n"
-    "⏱ *Таймеры:*\n"
-    "/таймер N — таймер на N секунд (например: /таймер 120)\n"
-    "/обновление N — установить интервал обновления таймера (в секундах, до 1 часа)\n\n"
-    "🧾 *Прочее:*\n"
-    "/к — показать этот список команд"
+        "📋 *Команды бота:*
+
+"
+        "🎲 *Рандомные числа:*
+"
+        "/рандом A B — случайное число от A до B
+"
+        "/р A B — то же самое, но короче
+"
+        "/из104 — случайное число от 1 до 104
+"
+        "/из4 — от 1 до 4
+"
+        "/из3 — от 1 до 3
+"
+        "/из2 — от 1 до 2
+
+"
+        "⏱ *Таймеры:*
+"
+        "/таймер N — таймер (в секундах или формате М:СС, например: /таймер 2:30)
+"
+        "/обновление N — установить интервал обновления таймера (в секундах, до 1 часа)
+"
+        "/сброс — отменить текущий таймер
+
+"
+        "🧾 *Прочее:*
+"
+        "/к — показать этот список команд"
     )
     bot.reply_to(message, text, parse_mode='Markdown')
 
@@ -109,21 +124,32 @@ def set_update_interval(message):
     except:
         bot.reply_to(message, "⚠️ Формат: /обновление 15 — число в секундах.")
 
+@bot.message_handler(commands=['сброс'])
+def cancel_timer(message):
+    if not is_allowed(message): return
+    key = (message.chat.id, message.message_thread_id)
+    active_timers[key] = False
+    bot.send_message(message.chat.id, "❌ Таймер остановлен.", message_thread_id=message.message_thread_id)
+
 @bot.message_handler(commands=['таймер'])
 def start_timer(message):
     if not is_allowed(message): return
     try:
         parts = message.text.split()
-        if len(parts) != 2 or not parts[1].isdigit():
-            raise ValueError
-
-        seconds = int(parts[1])
+        raw_time = parts[1]
+        if ':' in raw_time:
+            mins, secs = map(int, raw_time.split(':'))
+            seconds = mins * 60 + secs
+        else:
+            seconds = int(raw_time)
         if seconds < 1:
             bot.reply_to(message, "⚠️ Введи число больше 0.")
             return
 
         chat_id = message.chat.id
         thread_id = message.message_thread_id
+        key = (chat_id, thread_id)
+        active_timers[key] = True
 
         bot.send_message(
             chat_id,
@@ -133,17 +159,20 @@ def start_timer(message):
 
         def run_timer(total_seconds, chat_id, thread_id):
             global update_interval
-            while total_seconds > 0:
+            key = (chat_id, thread_id)
+            while total_seconds > 0 and active_timers.get(key, False):
                 sleep_time = min(update_interval, total_seconds)
                 time.sleep(sleep_time)
                 total_seconds -= sleep_time
-                if total_seconds > 0:
+                if total_seconds > 0 and active_timers.get(key, False):
                     bot.send_message(
                         chat_id,
                         f'⏳ Осталось: {total_seconds // 60}:{total_seconds % 60:02}',
                         message_thread_id=thread_id
                     )
-            bot.send_message(chat_id, '🔔 Таймер окончен!', message_thread_id=thread_id)
+            if active_timers.get(key, False):
+                bot.send_message(chat_id, '🔔 Таймер окончен!', message_thread_id=thread_id)
+            active_timers.pop(key, None)
 
         threading.Thread(
             target=run_timer,
@@ -151,7 +180,7 @@ def start_timer(message):
         ).start()
 
     except:
-        bot.reply_to(message, '⚠️ Используй формат: /таймер 60')
+        bot.reply_to(message, '⚠️ Формат: /таймер 60 или /таймер 2:30')
 
 @bot.message_handler(commands=['id'])
 def get_chat_id(message):
