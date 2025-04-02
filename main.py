@@ -99,22 +99,23 @@ def start_timer(message):
         chat_id = message.chat.id
         thread_id = message.message_thread_id
 
-        # первый вывод — сразу, как раньше
+        # первый вывод — сразу
         bot.send_message(
             chat_id,
-            f'⏳ Осталось: {seconds//60}:{seconds%60:02}',
+            f'⏳ Осталось: {seconds // 60}:{seconds % 60:02}',
             message_thread_id=thread_id
         )
 
         def run_timer(total_seconds, chat_id, thread_id):
             global update_interval
             while total_seconds > 0:
-                time.sleep(update_interval)
-                total_seconds -= update_interval
+                sleep_time = min(update_interval, total_seconds)
+                time.sleep(sleep_time)
+                total_seconds -= sleep_time
                 if total_seconds > 0:
                     bot.send_message(
                         chat_id,
-                        f'⏳ Осталось: {total_seconds//60}:{total_seconds%60:02}',
+                        f'⏳ Осталось: {total_seconds // 60}:{total_seconds % 60:02}',
                         message_thread_id=thread_id
                     )
             bot.send_message(chat_id, '🔔 Таймер окончен!', message_thread_id=thread_id)
