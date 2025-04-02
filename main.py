@@ -97,25 +97,34 @@ def start_timer(message):
     try:
         seconds = int(message.text.split()[1])
         chat_id = message.chat.id
-        bot.send_message(chat_id, f'⏳ Осталось: {seconds//60}:{seconds%60:02}')
+        thread_id = message.message_thread_id  # <-- вот он, нужный ID темы
 
-        def run_timer(total_seconds, chat_id):
+        bot.send_message(
+            chat_id,
+            f'⏳ Осталось: {seconds//60}:{seconds%60:02}',
+            message_thread_id=thread_id
+        )
+
+        def run_timer(total_seconds, chat_id, thread_id):
             global update_interval
             while total_seconds > 0:
                 time.sleep(update_interval)
                 total_seconds -= update_interval
                 if total_seconds > 0:
-                    bot.send_message(chat_id, f'⏳ Осталось: {total_seconds//60}:{total_seconds%60:02}')
-            bot.send_message(chat_id, '🔔 Таймер окончен!')
+                    bot.send_message(
+                        chat_id,
+                        f'⏳ Осталось: {total_seconds//60}:{total_seconds%60:02}',
+                        message_thread_id=thread_id
+                    )
+            bot.send_message(chat_id, '🔔 Таймер окончен!', message_thread_id=thread_id)
 
         threading.Thread(
             target=run_timer,
-            args=(seconds, chat_id)
+            args=(seconds, chat_id, thread_id)
         ).start()
 
     except:
         bot.reply_to(message, '⚠ Используй формат: /таймер 60')
-
 
 @app.route(f'/{TOKEN}', methods=['POST'])
 def webhook():
