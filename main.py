@@ -34,7 +34,7 @@ def webhook():
 def index():
     return 'Бот работает!'
 
-@app.before_first_request
+@app.before_request
 def activate_webhook():
     bot.remove_webhook()
     bot.set_webhook(url=f'{os.environ.get("RENDER_EXTERNAL_URL")}{TOKEN}')
