@@ -136,6 +136,10 @@ def start_timer(message):
     except:
         bot.reply_to(message, '⚠️ Используй формат: /таймер 60')
 
+@bot.message_handler(commands=['id'])
+def get_chat_id(message):
+    bot.reply_to(message, f"🆔 chat.id: `{message.chat.id}`", parse_mode='Markdown')
+
 @app.route(f'/{TOKEN}', methods=['POST'])
 def webhook():
     bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
