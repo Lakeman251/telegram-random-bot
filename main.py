@@ -97,27 +97,27 @@ def start_timer(message):
     try:
         seconds = int(message.text.split()[1])
         chat_id = message.chat.id
-        thread_id = message.message_thread_id  # <-- вот он, нужный ID темы
+        thread_id = message.message_thread_id  # ID темы
 
+        # сразу отправляем первое сообщение
         bot.send_message(
             chat_id,
             f'⏳ Осталось: {seconds//60}:{seconds%60:02}',
             message_thread_id=thread_id
         )
 
-    def run_timer(total_seconds, chat_id, thread_id):
-    global update_interval
-    while total_seconds > 0:
-        if total_seconds > update_interval:
-            bot.send_message(
-                chat_id,
-                f'⏳ Осталось: {total_seconds//60}:{total_seconds%60:02}',
-                message_thread_id=thread_id
-            )
-        time.sleep(update_interval)
-        total_seconds -= update_interval
-
-    bot.send_message(chat_id, '🔔 Таймер окончен!', message_thread_id=thread_id)
+        def run_timer(total_seconds, chat_id, thread_id):
+            global update_interval
+            while total_seconds > 0:
+                if total_seconds > update_interval:
+                    bot.send_message(
+                        chat_id,
+                        f'⏳ Осталось: {total_seconds//60}:{total_seconds%60:02}',
+                        message_thread_id=thread_id
+                    )
+                time.sleep(update_interval)
+                total_seconds -= update_interval
+            bot.send_message(chat_id, '🔔 Таймер окончен!', message_thread_id=thread_id)
 
         threading.Thread(
             target=run_timer,
